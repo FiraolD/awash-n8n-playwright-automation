@@ -1,0 +1,15 @@
+{
+  "url": "https://awash-portal.vercel.app/",
+  "admin": {
+    "username": "admin@awashinsurance.com",
+    "password": "REPLACE_WITH_TEST_PASSWORD"
+  },
+  "data": {
+    "firstName": "Demo",
+    "lastName": "Customer",
+    "email": "demo.customer@example.com",
+    "password": "Customer@12345",
+    "phone": "0912345678",
+    "role": "Customer"
+  }
+}

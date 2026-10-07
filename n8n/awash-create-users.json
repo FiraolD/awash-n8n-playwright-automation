@@ -1,0 +1,61 @@
+{
+  "name": "Awash Portal - Multi User Creation via Playwright",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-800, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const baseUrl = 'https://awash-portal.vercel.app/';\n\n// Replace these test records with your authorized test users/data.\n// Keep real credentials in n8n credentials or environment variables in production.\nconst adminUsers = [\n  { username: 'admin@awashinsurance.com', password: 'REPLACE_WITH_TEST_PASSWORD' }\n];\n\nconst recordsToCreate = [\n  {\n    firstName: 'Test',\n    lastName: 'Customer',\n    email: 'test.customer.001@example.com',\n    password: 'Customer@12345',\n    phone: '0912345678',\n    role: 'Customer'\n  }\n];\n\nreturn recordsToCreate.map((data, index) => ({\n  json: {\n    index,\n    url: baseUrl,\n    admin: adminUsers[index % adminUsers.length],\n    data\n  }\n}));"
+      },
+      "id": "build-input",
+      "name": "Build Test Users",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/execute",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.url, admin: $json.admin, data: $json.data }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "execute-playwright",
+      "name": "Execute Playwright",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-80, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json;\nreturn [{ json: {\n  success: Boolean(r.success),\n  admin: r.username,\n  targetEmail: r.targetEmail,\n  message: r.success ? 'User creation completed and was verified.' : (r.error || 'User creation failed'),\n  steps: r.steps || {},\n  screenshot: r.screenshot || null,\n  runId: r.runId || null\n} }];"
+      },
+      "id": "normalize-result",
+      "name": "Normalize Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 0]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Test Users", "type": "main", "index": 0 }]] },
+    "Build Test Users": { "main": [[{ "node": "Execute Playwright", "type": "main", "index": 0 }]] },
+    "Execute Playwright": { "main": [[{ "node": "Normalize Result", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "1",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}
